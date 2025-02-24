@@ -9,7 +9,7 @@ export async function GET() {
     const fileData = await fs.readFile(filePath, "utf8");
 
     const records = parse(fileData, {
-      columns: (header) => header.map(h => h.trim()), 
+      columns: (header: string[]) => header.map((h: string) => h.trim()), 
       skip_empty_lines: true,
     }).map((job: Record<string, string>, index: number) => ({
       id: `job-${index}`,

@@ -59,7 +59,7 @@ export default function JobList({ onSelectJob, showSaved, searchQuery, onSearch 
     if (listRef.current) {
       listRef.current.scrollTop = scrollPositions[showSaved ? 'saved' : 'available'];
     }
-  }, [showSaved, jobs.length, savedJobs.length]);
+  }, [showSaved, jobs.length, savedJobs.length, scrollPositions]);
 
   const filterJobs = (jobs: Job[]) => {
     if (!searchQuery.trim()) return jobs;

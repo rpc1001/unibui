@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { IoSearchOutline } from 'react-icons/io5';
 import { motion, AnimatePresence } from 'framer-motion';
 

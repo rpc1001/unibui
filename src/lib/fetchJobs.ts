@@ -17,7 +17,7 @@ export async function fetchJobs(): Promise<Job[]> {
     const jobs = await response.json();
     console.log("Fetched jobs:", jobs); 
 
-    return jobs.filter(job => job.latitude !== null && job.longitude !== null);
+    return jobs.filter((job: Job) => job.latitude !== null && job.longitude !== null);
   } catch (error) {
     console.error("Error fetching jobs:", error);
     return [];

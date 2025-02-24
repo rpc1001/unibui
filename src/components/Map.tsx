@@ -1,13 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Map, { Marker, Popup } from "react-map-gl";
+import { useEffect, useState } from "react";
+import Map, { Marker } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { fetchJobs, Job } from "@/lib/fetchJobs";
+import { MdWork } from "react-icons/md";
 
-export default function JobMap() {
+interface JobMapProps {
+  selectedJob: Job | null;
+  onSelectJob: (job: Job) => void;
+}
+
+export default function JobMap({ selectedJob, onSelectJob }: JobMapProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
   useEffect(() => {
     async function loadJobs() {
@@ -24,44 +29,37 @@ export default function JobMap() {
         longitude: -121.7405,
         zoom: 12,
       }}
-      style={{ width: "100%", height: "100vh" }}
-      mapStyle="mapbox://styles/mapbox/dark-v11"
+      style={{ width: "100%", height: "100%" }}
+      mapStyle="mapbox://styles/mapbox/outdoors-v12"
       mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
     >
       {jobs.map((job) => {
         const lat = parseFloat(job.latitude);
         const lng = parseFloat(job.longitude);
+        const isSelected = selectedJob?.id === job.id;
+
         return (
           <Marker
             key={job.id}
             latitude={lat}
             longitude={lng}
-            anchor="bottom" 
+            anchor="bottom"
             onClick={(e) => {
               e.originalEvent.stopPropagation();
-              setSelectedJob(job);
+              onSelectJob(job);
             }}
           >
-            <div className="cursor-pointer text-xl">📍</div>
+            <MdWork
+              size={isSelected ? 32 : 24}
+              className={`
+                cursor-pointer
+                transition-transform duration-200
+                ${isSelected ? "text-orange-300 scale-110" : "text-orange-500 hover:scale-110"}
+              `}
+            />
           </Marker>
         );
       })}
-
-      {selectedJob && (
-        <Popup
-          latitude={parseFloat(selectedJob.latitude)}
-          longitude={parseFloat(selectedJob.longitude)}
-          onClose={() => setSelectedJob(null)}
-          closeOnClick={false}
-          anchor="top"
-        >
-          <div className="p-2">
-            <h3 className="font-bold">{selectedJob.title}</h3>
-            <p>{selectedJob.company}</p>
-            <p>{selectedJob.location}</p>
-          </div>
-        </Popup>
-      )}
     </Map>
   );
 }

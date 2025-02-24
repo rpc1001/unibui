@@ -1,6 +1,8 @@
 "use client";
 
 import { Job } from "@/lib/fetchJobs";
+import { motion } from "framer-motion";
+import { IoArrowBack } from "react-icons/io5";
 
 interface JobDetailProps {
   job: Job;
@@ -9,29 +11,47 @@ interface JobDetailProps {
 
 export default function JobDetail({ job, onBack }: JobDetailProps) {
   return (
-    <div className="space-y-4">
+    <motion.div
+      initial={{ opacity: 0, x: 100 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 100 }}
+      className="space-y-6 p-4"
+    >
       <button
-        className="text-sm text-gray-300 hover:text-white"
         onClick={onBack}
+        className="flex items-center space-x-2 text-[var(--text-secondary)] hover:text-[var(--foreground)] transition-colors"
       >
-        &larr; Back to job list
+        <IoArrowBack />
+        <span>Back</span>
       </button>
 
-      <h2 className="text-2xl font-bold">{job.title}</h2>
-      <p className="text-lg text-gray-300">{job.company}</p>
-      <p className="text-gray-500">{job.location}</p>
+      <div className="space-y-4">
+        <h2 className="text-3xl font-semibold">{job.title}</h2>
+        <div className="space-y-1">
+          <p className="text-xl">{job.company}</p>
+          <p className="text-[var(--text-secondary)]">{job.location}</p>
+        </div>
 
-      <hr className="border-gray-700" />
+        <div className="apple-card p-6 space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold mb-2">About the role</h3>
+            <p className="text-[var(--text-secondary)] leading-relaxed">
+              {job.description}
+            </p>
+          </div>
 
-      <p className="text-sm text-gray-200">
-      <p className="text-gray-500">{job.description}</p>
-      <p className="text-gray-500">{job.requirements}</p>
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Requirements</h3>
+            <p className="text-[var(--text-secondary)] leading-relaxed">
+              {job.requirements}
+            </p>
+          </div>
+        </div>
 
-      </p>
-
-      <button className="mt-4 bg-blue-600 px-4 py-2 rounded hover:bg-blue-500 transition">
-        Save Job
-      </button>
-    </div>
+        <button className="apple-button w-full">
+          Save Job
+        </button>
+      </div>
+    </motion.div>
   );
 }

@@ -21,7 +21,7 @@ export default function HomePage() {
         {selectedJob ? (
           <JobDetail
             job={selectedJob}
-            onClose={() => setSelectedJob(null)}
+            onBack={() => setSelectedJob(null)}
           />
         ) : (
           <JobList onSelectJob={setSelectedJob} />

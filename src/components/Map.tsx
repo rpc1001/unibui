@@ -5,6 +5,7 @@ import Map, { Marker } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { fetchJobs, Job } from "@/lib/fetchJobs";
 import { MdWork } from "react-icons/md";
+import { motion } from "framer-motion";
 
 interface JobMapProps {
   selectedJob: Job | null;
@@ -49,14 +50,21 @@ export default function JobMap({ selectedJob, onSelectJob }: JobMapProps) {
               onSelectJob(job);
             }}
           >
-            <MdWork
-              size={isSelected ? 32 : 24}
-              className={`
-                cursor-pointer
-                transition-transform duration-200
-                ${isSelected ? "text-orange-300 scale-110" : "text-orange-500 hover:scale-110"}
-              `}
-            />
+            <motion.div
+              animate={{
+                scale: isSelected ? 1.2 : 1,
+                y: isSelected ? -10 : 0
+              }}
+              whileHover={{ scale: 1.1, y: -5 }}
+              transition={{ type: "spring", stiffness: 300, damping: 15 }}
+            >
+              <div className={`
+                p-2 rounded-full shadow-lg
+                ${isSelected ? 'bg-orange-400 text-white' : 'bg-white text-orange-400'}
+              `}>
+                <MdWork size={isSelected ? 24 : 20} />
+              </div>
+            </motion.div>
           </Marker>
         );
       })}

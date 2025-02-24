@@ -17,18 +17,22 @@ export default function HomePage() {
 
   const handleBack = () => {
     setSelectedJob(null);
-    setShowSavedJobs(previousView);
+    if (showSavedJobs !== previousView) {
+      setShowSavedJobs(previousView);
+    }
   };
 
   const handleViewChange = (showSaved: boolean) => {
     setShowSavedJobs(showSaved);
     setSelectedJob(null);
+    if (showSaved) {
+      setSearchQuery("");
+    }
   };
 
   const handleJobSelect = (job: Job | null) => {
     if (job) {
       setPreviousView(showSavedJobs);
-      setShowSavedJobs(false);
     }
     setSelectedJob(job);
   };

@@ -6,13 +6,14 @@ import JobList from "@/components/JobList";
 import JobDetail from "@/components/JobDetail";
 import { Job } from "@/lib/fetchJobs";
 import { SavedJobsProvider } from "@/context/SavedJobsContext";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { MdBookmark, MdWork } from "react-icons/md";
 
 export default function HomePage() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showSavedJobs, setShowSavedJobs] = useState(false);
   const [previousView, setPreviousView] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleBack = () => {
     setSelectedJob(null);
@@ -32,6 +33,13 @@ export default function HomePage() {
     setSelectedJob(job);
   };
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (query && showSavedJobs) {
+      setShowSavedJobs(false);
+    }
+  };
+
   return (
     <SavedJobsProvider>
       <div className="relative h-screen w-screen">
@@ -39,6 +47,7 @@ export default function HomePage() {
           selectedJob={selectedJob}
           onSelectJob={handleJobSelect}
           showSavedJobs={showSavedJobs}
+          searchQuery={searchQuery}
         />
 
         <div className="absolute top-0 right-0 w-full sm:w-96 h-full bg-[var(--card-background)] backdrop-blur-xl text-[var(--foreground)] overflow-hidden z-10">
@@ -75,6 +84,8 @@ export default function HomePage() {
                 key={showSavedJobs ? "saved" : "all"}
                 onSelectJob={handleJobSelect}
                 showSaved={showSavedJobs}
+                searchQuery={searchQuery}
+                onSearch={handleSearch}
               />
             )}
           </AnimatePresence>

@@ -5,18 +5,19 @@ import { fetchJobs, Job } from "@/lib/fetchJobs";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSavedJobs } from "@/context/SavedJobsContext";
 import { MdBookmark } from "react-icons/md";
+import { IoSearchOutline } from 'react-icons/io5';
 
 interface JobListProps {
   onSelectJob: (job: Job) => void;
   showSaved: boolean;
+  searchQuery: string;
+  onSearch: (query: string) => void;
 }
 
-export default function JobList({ onSelectJob, showSaved }: JobListProps) {
+export default function JobList({ onSelectJob, showSaved, searchQuery, onSearch }: JobListProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const { savedJobs, isJobSaved } = useSavedJobs();
   const listRef = useRef<HTMLDivElement>(null);
-  
-  // initialize scroll positions from localStorage
   const [scrollPositions, setScrollPositions] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('jobListScrollPositions');
@@ -33,6 +34,16 @@ export default function JobList({ onSelectJob, showSaved }: JobListProps) {
     loadJobs();
   }, []);
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    onSearch(value);
+    localStorage.setItem('jobSearchQuery', value);
+    // reset scroll position when searching
+    if (listRef.current) {
+      listRef.current.scrollTop = 0;
+    }
+  };
+
   const handleScroll = () => {
     if (listRef.current) {
       const newPositions = {
@@ -44,17 +55,23 @@ export default function JobList({ onSelectJob, showSaved }: JobListProps) {
     }
   };
 
-  // restore scroll position when view changes or component mounts
   useEffect(() => {
-    const list = listRef.current;
-    if (list) {
-      requestAnimationFrame(() => {
-        list.scrollTop = scrollPositions[showSaved ? 'saved' : 'available'];
-      });
+    if (listRef.current) {
+      listRef.current.scrollTop = scrollPositions[showSaved ? 'saved' : 'available'];
     }
   }, [showSaved, jobs.length, savedJobs.length]);
 
-  const displayJobs = showSaved ? savedJobs : jobs;
+  const filterJobs = (jobs: Job[]) => {
+    if (!searchQuery.trim()) return jobs;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return jobs.filter(job => 
+      job.title.toLowerCase().includes(query) ||
+      job.company.toLowerCase().includes(query)
+    );
+  };
+
+  const displayJobs = filterJobs(showSaved ? savedJobs : jobs);
 
   return (
     <motion.div
@@ -67,6 +84,25 @@ export default function JobList({ onSelectJob, showSaved }: JobListProps) {
       <h2 className="text-2xl font-semibold p-4">
         {showSaved ? "Saved Positions" : "Available Positions"}
       </h2>
+      
+      {!showSaved && (
+        <div className="px-4 pb-4">
+          <div className="relative flex items-center">
+            <IoSearchOutline className="absolute left-3 text-[var(--text-secondary)]" size={20} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearch}
+              placeholder="Search jobs or companies..."
+              className="w-full pl-10 pr-4 py-2 bg-[var(--background)] rounded-full 
+                       border border-[var(--text-secondary)]/20
+                       focus:outline-none focus:border-[var(--accent)]
+                       text-[var(--foreground)] placeholder-[var(--text-secondary)]"
+            />
+          </div>
+        </div>
+      )}
+
       <div 
         ref={listRef}
         onScroll={handleScroll}
@@ -101,8 +137,10 @@ export default function JobList({ onSelectJob, showSaved }: JobListProps) {
               );
             })}
           </AnimatePresence>
-          {showSaved && savedJobs.length === 0 && (
-            <p className="text-center text-[var(--text-secondary)]">No saved jobs yet</p>
+          {displayJobs.length === 0 && (
+            <p className="text-center text-[var(--text-secondary)]">
+              {showSaved ? "No saved jobs yet" : "No jobs found"}
+            </p>
           )}
         </div>
       </div>

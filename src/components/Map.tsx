@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Map, { Marker } from "react-map-gl";
-import type { MapRef } from 'react-map-gl';
 import "mapbox-gl/dist/mapbox-gl.css";
 import { fetchJobs, Job } from "@/lib/fetchJobs";
 import { MdWork, MdBookmark } from "react-icons/md";
@@ -13,12 +12,12 @@ interface JobMapProps {
   selectedJob: Job | null;
   onSelectJob: (job: Job) => void;
   showSavedJobs: boolean;
+  searchQuery: string;
 }
 
-export default function JobMap({ selectedJob, onSelectJob, showSavedJobs }: JobMapProps) {
+export default function JobMap({ selectedJob, onSelectJob, showSavedJobs, searchQuery }: JobMapProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const { isJobSaved } = useSavedJobs();
-  const mapRef = useRef<MapRef>(null);
+  const { savedJobs, isJobSaved } = useSavedJobs();
 
   useEffect(() => {
     async function loadJobs() {
@@ -28,18 +27,17 @@ export default function JobMap({ selectedJob, onSelectJob, showSavedJobs }: JobM
     loadJobs();
   }, []);
 
-  useEffect(() => {
-    if (selectedJob && mapRef.current) {
-      const lat = parseFloat(selectedJob.latitude);
-      const lng = parseFloat(selectedJob.longitude);
-      
-      mapRef.current.flyTo({
-        center: [lng, lat],
-        duration: 1500,
-        zoom: mapRef.current.getZoom()
-      });
-    }
-  }, [selectedJob]);
+  const filterJobs = (jobs: Job[]) => {
+    if (!searchQuery.trim()) return jobs;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return jobs.filter(job => 
+      job.title.toLowerCase().includes(query) ||
+      job.company.toLowerCase().includes(query)
+    );
+  };
+
+  const displayJobs = filterJobs(showSavedJobs ? savedJobs : jobs);
 
   return (
     <Map
@@ -52,9 +50,8 @@ export default function JobMap({ selectedJob, onSelectJob, showSavedJobs }: JobM
       mapStyle="mapbox://styles/mapbox/outdoors-v12"
       mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
       onClick={() => onSelectJob(null)}
-      ref={mapRef}
     >
-      {jobs.map((job) => {
+      {displayJobs.map((job) => {
         const lat = parseFloat(job.latitude);
         const lng = parseFloat(job.longitude);
         const isSelected = selectedJob?.id === job.id;
@@ -83,7 +80,7 @@ export default function JobMap({ selectedJob, onSelectJob, showSavedJobs }: JobM
                 className="p-2 rounded-full shadow-lg"
                 animate={{ 
                   backgroundColor: isSelected 
-                    ? (isJobSaved(job.id) ? 'rgb(168, 85, 247)' : 'rgb(244, 96, 54)')
+                    ? (isJobSaved(job.id) ? 'rgb(168, 85, 247)' : 'rgb(244, 96, 68)')
                     : isJobSaved(job.id)
                       ? 'rgb(168, 85, 247)'
                       : 'rgb(255, 255, 255)',

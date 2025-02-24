@@ -3,6 +3,7 @@
 import { Job } from "@/lib/fetchJobs";
 import { motion } from "framer-motion";
 import { IoArrowBack } from "react-icons/io5";
+import { useSavedJobs } from "@/context/SavedJobsContext";
 
 interface JobDetailProps {
   job: Job;
@@ -10,6 +11,9 @@ interface JobDetailProps {
 }
 
 export default function JobDetail({ job, onBack }: JobDetailProps) {
+  const { toggleSaveJob, isJobSaved } = useSavedJobs();
+  const saved = isJobSaved(job.id);
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 100 }}
@@ -48,9 +52,15 @@ export default function JobDetail({ job, onBack }: JobDetailProps) {
           </div>
         </div>
 
-        <button className="apple-button w-full">
-          Save Job
-        </button>
+        <motion.button 
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleSaveJob(job);
+          }} 
+          className={`apple-button w-full ${saved ? 'bg-purple-600' : 'bg-blue-500'}`}
+        >
+          {saved ? 'Remove Job' : 'Save Job'}
+        </motion.button>
       </div>
     </motion.div>
   );

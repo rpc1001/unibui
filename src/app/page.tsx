@@ -1,19 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import JobMap from "@/components/Map";
 import JobList from "@/components/JobList";
 import JobDetail from "@/components/JobDetail";
-import { Job } from "@/lib/fetchJobs";
+import { Job, fetchJobs } from "@/lib/fetchJobs";
 import { SavedJobsProvider } from "@/context/SavedJobsContext";
 import { AnimatePresence } from "framer-motion";
 import { MdBookmark, MdWork } from "react-icons/md";
 
 export default function HomePage() {
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showSavedJobs, setShowSavedJobs] = useState(false);
   const [previousView, setPreviousView] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const loadJobs = async () => {
+      const data = await fetchJobs();
+      setJobs(data);
+    };
+
+    loadJobs();
+  }, []);
 
   const handleBack = () => {
     setSelectedJob(null);
@@ -52,6 +62,7 @@ export default function HomePage() {
           onSelectJob={handleJobSelect}
           showSavedJobs={showSavedJobs}
           searchQuery={searchQuery}
+          jobs={jobs}
         />
 
         <div className="absolute top-0 right-0 w-full sm:w-96 h-full bg-[var(--card-background)] backdrop-blur-xl text-[var(--foreground)] overflow-hidden z-10">
@@ -90,6 +101,7 @@ export default function HomePage() {
                 showSaved={showSavedJobs}
                 searchQuery={searchQuery}
                 onSearch={handleSearch}
+                jobs={jobs}
               />
             )}
           </AnimatePresence>

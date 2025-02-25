@@ -1,77 +1,65 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { fetchJobs, Job } from "@/lib/fetchJobs";
+import { Job } from "@/lib/fetchJobs"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { useSavedJobs } from "@/context/SavedJobsContext";
 import { MdBookmark } from "react-icons/md";
-import { IoSearchOutline } from 'react-icons/io5';
+import { IoSearchOutline } from "react-icons/io5";
 
 interface JobListProps {
   onSelectJob: (job: Job) => void;
   showSaved: boolean;
   searchQuery: string;
   onSearch: (query: string) => void;
+  jobs: Job[];
 }
 
-export default function JobList({ onSelectJob, showSaved, searchQuery, onSearch }: JobListProps) {
-  const [jobs, setJobs] = useState<Job[]>([]);
+export default function JobList({ 
+  onSelectJob, 
+  showSaved, 
+  searchQuery, 
+  onSearch, 
+  jobs 
+}: JobListProps) {
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const { savedJobs, isJobSaved } = useSavedJobs();
+
   const listRef = useRef<HTMLDivElement>(null);
-  const [scrollPositions, setScrollPositions] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('jobListScrollPositions');
-      return saved ? JSON.parse(saved) : { saved: 0, available: 0 };
-    }
-    return { saved: 0, available: 0 };
-  });
+
+  const scrollPositionKey = showSaved ? "saved" : "available";
 
   useEffect(() => {
-    async function loadJobs() {
-      const data = await fetchJobs();
-      setJobs(data);
-    }
-    loadJobs();
-  }, []);
+    const filterJobs = () => {
+      const data = showSaved ? savedJobs : jobs;
+      if (!searchQuery.trim()) return data;
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    onSearch(value);
-    localStorage.setItem('jobSearchQuery', value);
-    // reset scroll position when searching
-    if (listRef.current) {
-      listRef.current.scrollTop = 0;
-    }
-  };
+      const query = searchQuery.toLowerCase().trim();
+      return data.filter(job =>
+        job.title.toLowerCase().includes(query) ||
+        job.company.toLowerCase().includes(query)
+      );
+    };
+    setFilteredJobs(filterJobs());
+  }, [showSaved, searchQuery, jobs, savedJobs]);
+
+  useEffect(() => {
+    const savedScroll = localStorage.getItem(`jobListScrollPosition-${scrollPositionKey}`);
+    if (!listRef.current || !savedScroll) return;
+
+    const restoreScroll = () => {
+      listRef.current!.scrollTop = parseInt(savedScroll, 10);
+    };
+
+    requestAnimationFrame(restoreScroll);
+  }, [scrollPositionKey, filteredJobs]);
 
   const handleScroll = () => {
     if (listRef.current) {
-      const newPositions = {
-        ...scrollPositions,
-        [showSaved ? 'saved' : 'available']: listRef.current.scrollTop
-      };
-      setScrollPositions(newPositions);
-      localStorage.setItem('jobListScrollPositions', JSON.stringify(newPositions));
+      const pos = listRef.current.scrollTop;
+      localStorage.setItem(`jobListScrollPosition-${scrollPositionKey}`, pos.toString());
     }
   };
-
-  useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = scrollPositions[showSaved ? 'saved' : 'available'];
-    }
-  }, [showSaved, jobs.length, savedJobs.length, scrollPositions]);
-
-  const filterJobs = (jobs: Job[]) => {
-    if (!searchQuery.trim()) return jobs;
-    
-    const query = searchQuery.toLowerCase().trim();
-    return jobs.filter(job => 
-      job.title.toLowerCase().includes(query) ||
-      job.company.toLowerCase().includes(query)
-    );
-  };
-
-  const displayJobs = filterJobs(showSaved ? savedJobs : jobs);
 
   return (
     <motion.div
@@ -88,16 +76,19 @@ export default function JobList({ onSelectJob, showSaved, searchQuery, onSearch 
       {!showSaved && (
         <div className="px-4 pb-4">
           <div className="relative flex items-center">
-            <IoSearchOutline className="absolute left-3 text-[var(--text-secondary)]" size={20} />
+            <IoSearchOutline 
+              className="absolute left-3 text-[var(--text-secondary)]" 
+              size={20} 
+            />
             <input
               type="text"
               value={searchQuery}
-              onChange={handleSearch}
+              onChange={(e) => onSearch(e.target.value)}
               placeholder="Search jobs or companies..."
               className="w-full pl-10 pr-4 py-2 bg-[var(--background)] rounded-full 
-                       border border-[var(--text-secondary)]/20
-                       focus:outline-none focus:border-[var(--accent)]
-                       text-[var(--foreground)] placeholder-[var(--text-secondary)]"
+                         border border-[var(--text-secondary)]/20
+                         focus:outline-none focus:border-[var(--accent)]
+                         text-[var(--foreground)] placeholder-[var(--text-secondary)]"
             />
           </div>
         </div>
@@ -110,7 +101,7 @@ export default function JobList({ onSelectJob, showSaved, searchQuery, onSearch 
       >
         <div className="px-4 pb-20 space-y-4">
           <AnimatePresence mode="popLayout">
-            {displayJobs.map((job) => {
+            {filteredJobs.map(job => {
               const saved = isJobSaved(job.id);
               return (
                 <motion.div
@@ -137,7 +128,8 @@ export default function JobList({ onSelectJob, showSaved, searchQuery, onSearch 
               );
             })}
           </AnimatePresence>
-          {displayJobs.length === 0 && (
+
+          {filteredJobs.length === 0 && (
             <p className="text-center text-[var(--text-secondary)]">
               {showSaved ? "No saved jobs yet" : "No jobs found"}
             </p>
